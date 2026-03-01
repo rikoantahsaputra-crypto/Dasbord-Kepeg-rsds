@@ -1,142 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MENU & DASHBOARD KEPEGAWAIAN</title>
+<title>Dashboard Layanan Kepegawaian</title>
 
 <style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f8fafc;color:#111827;}
-.main-header{background:linear-gradient(135deg,#1e3a8a,#0f172a);padding:50px 20px;color:white;text-align:center;position:relative;}
-.back-btn{position:absolute;top:20px;left:20px;background:white;color:#1e3a8a;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;display:none;}
-.container{max-width:1100px;margin:auto;padding:40px 20px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-.card{background:white;border-radius:18px;padding:30px 20px;text-align:center;border:1px solid #e5e7eb;transition:.25s ease;box-shadow:0 4px 10px rgba(0,0,0,.05);cursor:pointer;}
-.card:hover{transform:translateY(-6px);border-color:#1e3a8a;box-shadow:0 12px 20px rgba(0,0,0,.15);}
-.icon{font-size:34px;margin-bottom:12px;color:#1e3a8a;}
-#dashboardPage{display:none;}
-.layout{display:flex;}
-.sidebar{width:220px;background:white;border-right:1px solid #e5e7eb;padding:15px;height:calc(100vh - 70px);overflow:auto;}
-.menu-item{padding:8px 10px;border-radius:6px;cursor:pointer;margin-bottom:4px;font-size:14px;}
-.menu-item:hover{background:#f1f5f9;}
-.menu-item.active{background:#1e3a8a;color:white;}
-.content{flex:1;padding:20px 40px;}
-.card-data{background:white;padding:18px;border-radius:8px;margin-bottom:18px;border:1px solid #e5e7eb;}
-.label{font-weight:600;margin-top:8px;}
-textarea{width:100%;margin-top:6px;padding:6px;border-radius:6px;border:1px solid #cbd5e1;}
-.save-btn{margin-top:8px;padding:6px 14px;background:#1e3a8a;color:white;border:none;border-radius:6px;cursor:pointer;}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:600px){.grid{grid-template-columns:1fr;}.layout{flex-direction:column;}.sidebar{width:100%;height:auto;}}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#0f172a,#1e293b);
+  color:white;
+}
+
+header{
+  padding:20px;
+  text-align:center;
+  font-size:22px;
+  font-weight:600;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+input,select{
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin:5px 0;
+  width:100%;
+}
+
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  background:#3b82f6;
+  color:white;
+  cursor:pointer;
+  font-weight:600;
+}
+
+button:hover{
+  background:#2563eb;
+}
+
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin-top:10px;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+.table th,.table td{
+  padding:8px;
+  border-bottom:1px solid #334155;
+  font-size:14px;
+}
+
+.table th{
+  background:#0f172a;
+}
+
+.hidden{
+  display:none;
+}
 </style>
 </head>
+
 <body>
 
-<div class="main-header">
-<button class="back-btn" onclick="goToMenu()">⬅ Back</button>
-<h2 id="headerTitle">MENU KEPEGAWAIAN</h2>
-</div>
+<header>Dashboard Layanan Kepegawaian</header>
 
-<div id="menuPage">
 <div class="container">
-<div class="grid">
-<div class="card" onclick="goToDashboard()">
-<div class="icon">💼</div>
-<div>APLIKASI KEPEGAWAIAN</div>
-</div>
-</div>
-</div>
+
+<div class="card">
+  <input type="email" id="email" placeholder="Masukkan Email Anda">
+  <button onclick="loadLayanan()">Masuk</button>
+  <div id="msg"></div>
 </div>
 
-<div id="dashboardPage">
-<div class="layout">
-<div class="sidebar">
-<div class="menu-item active" onclick="selectLayanan('Pangkat',this)">Pangkat</div>
-<div class="menu-item" onclick="selectLayanan('Gaji Berkala',this)">Gaji Berkala</div>
-<div class="menu-item" onclick="selectLayanan('UKOM',this)">UKOM</div>
-<div class="menu-item" onclick="selectLayanan('Jabatan Fungsional',this)">Jabatan Fungsional</div>
-<div class="menu-item" onclick="selectLayanan('Cuti',this)">Cuti</div>
-<div class="menu-item" onclick="selectLayanan('SIB-SIP',this)">SIB / SIP</div>
+<div class="card hidden" id="main">
+  <select id="layananSelect"></select>
+  <button onclick="loadData()">Tampilkan Data</button>
+  <div id="result"></div>
 </div>
-<div class="content">
-<div id="dataArea">Loading...</div>
-</div>
-</div>
+
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbwSDFnLxo_Qp9Sy5PDu_rSMSd-bhJ8Ppbr31BaX1jubHVfXPdHFhFroFCkZnPacihuQAA/exec";
 
-let currentLayanan="Pangkat";
+const API = "https://script.google.com/macros/s/AKfycbyzv6aJyQIFoWgg6CalLBl7738_QKt_HpUE8uS-yiXLS75foi3nOSw08Djj2zG_IeCGPA/exec";
+
+let userEmail = "";
+
+function loadLayanan(){
+
+  userEmail = document.getElementById("email").value.trim();
+
+  if(!userEmail){
+    alert("Email wajib diisi");
+    return;
+  }
+
+  fetch(`${API}?action=list&email=${userEmail}`)
+  .then(res=>res.json())
+  .then(data=>{
+
+    if(data.error){
+      document.getElementById("msg").innerHTML =
+        "<span style='color:red'>"+data.error+"</span>";
+      return;
+    }
+
+    const select = document.getElementById("layananSelect");
+    select.innerHTML="";
+
+    data.forEach(l=>{
+      const opt=document.createElement("option");
+      opt.value=l;
+      opt.textContent=l;
+      select.appendChild(opt);
+    });
+
+    document.getElementById("main").classList.remove("hidden");
+    document.getElementById("msg").innerHTML="";
+  });
+}
 
 function loadData(){
-fetch(`${API_URL}?layanan=${encodeURIComponent(currentLayanan)}`)
-.then(r=>r.json())
-.then(data=>render(data));
+
+  const layanan = document.getElementById("layananSelect").value;
+
+  fetch(`${API}?action=data&layanan=${layanan}&email=${userEmail}`)
+  .then(res=>res.json())
+  .then(data=>{
+
+    if(data.error){
+      alert(data.error);
+      return;
+    }
+
+    let html="<table class='table'><tr><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Gol</th></tr>";
+
+    data.forEach(d=>{
+      html+=`<tr>
+        <td>${d.nama}</td>
+        <td>${d.nip}</td>
+        <td>${d.jabatan}</td>
+        <td>${d.gol}</td>
+      </tr>`;
+    });
+
+    html+="</table>";
+
+    document.getElementById("result").innerHTML=html;
+  });
 }
 
-function render(data){
-
-let html="";
-
-data.forEach(d=>{
-
-html+=`<div class="card-data">
-<div class="label">Nama</div>${d.nama}
-<div class="label">NIP</div>${d.nip}`;
-
-if(d.gol) html+=`<div class="label">Golongan</div>${d.gol}`;
-if(d.jabatan) html+=`<div class="label">Jabatan</div>${d.jabatan}`;
-if(d.status) html+=`<div class="label">Status</div>${d.status}`;
-if(d.priode) html+=`<div class="label">Priode</div>${d.priode}`;
-if(d.nik) html+=`<div class="label">NIK</div>${d.nik}`;
-if(d.pak) html+=`<div class="label">PAK</div>${d.pak}`;
-if(d.hp) html+=`<div class="label">HP</div>${d.hp}`;
-if(d.jenis) html+=`<div class="label">Jenis</div>${d.jenis}`;
-if(d.lama) html+=`<div class="label">Lama</div>${d.lama}`;
-if(d.mulai) html+=`<div class="label">Mulai</div>${d.mulai}`;
-if(d.selesai) html+=`<div class="label">Selesai</div>${d.selesai}`;
-if(d.folder) html+=`<div class="label">Folder</div><a href="${d.folder}" target="_blank">Buka</a>`;
-if(d.fileSrikandi) html+=`<div class="label">File Srikandi</div><a href="${d.fileSrikandi}" target="_blank">Buka</a>`;
-if(d.fileSTR) html+=`<div class="label">File STR</div><a href="${d.fileSTR}" target="_blank">Buka</a>`;
-
-html+=`<div class="label">Waktu</div>${new Date(d.timestamp).toLocaleString()}`;
-
-if(currentLayanan!=="Cuti"){
-html+=`
-<div class="label">Catatan</div>
-<textarea id="cat_${d.row}">${d.catatan||""}</textarea>
-<button onclick="saveCatatan(${d.row})">Simpan</button>`;
-}else{
-html+=`<div class="label">Catatan</div>${d.catatan||""}`;
-}
-
-html+=`</div>`;
-
-});
-
-document.getElementById("dataArea").innerHTML=html;
-}
-
-function saveCatatan(row){
-const columnMap={
-"Pangkat":13,
-"Gaji Berkala":9,
-"UKOM":12,
-"Jabatan Fungsional":7,
-"SIB-SIP":9
-};
-
-const val=document.getElementById("cat_"+row).value;
-
-fetch(API_URL,{
-method:"POST",
-body:JSON.stringify({
-layanan:currentLayanan,
-row:row,
-column:columnMap[currentLayanan],
-value:val
-})
-}).then(()=>loadData());
-}
 </script>
 
 </body>
