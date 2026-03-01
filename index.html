@@ -9,14 +9,15 @@
 body{
   margin:0;
   font-family:'Segoe UI',sans-serif;
-  background:linear-gradient(135deg,#0f172a,#1e293b);
-  color:white;
+  background:#f1f5f9;
 }
 
 header{
   padding:20px;
+  background:#0f172a;
+  color:white;
   text-align:center;
-  font-size:22px;
+  font-size:20px;
   font-weight:600;
 }
 
@@ -29,46 +30,55 @@ header{
 input,select{
   padding:10px;
   border-radius:8px;
-  border:none;
+  border:1px solid #cbd5e1;
   margin:5px 0;
   width:100%;
 }
 
 button{
-  padding:10px 15px;
+  padding:8px 12px;
   border:none;
   border-radius:8px;
-  background:#3b82f6;
+  background:#2563eb;
   color:white;
   cursor:pointer;
   font-weight:600;
 }
 
 button:hover{
-  background:#2563eb;
+  background:#1d4ed8;
 }
 
 .card{
-  background:#1e293b;
+  background:white;
   padding:15px;
-  border-radius:12px;
-  margin-top:10px;
+  border-radius:14px;
+  margin-top:15px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.05);
 }
 
-.table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
+.card h3{
+  margin:0 0 5px 0;
+  font-size:16px;
 }
 
-.table th,.table td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-  font-size:14px;
+.label{
+  font-size:12px;
+  color:#64748b;
 }
 
-.table th{
-  background:#0f172a;
+.field{
+  margin-top:6px;
+}
+
+.folder-link{
+  color:#2563eb;
+  font-weight:600;
+  text-decoration:none;
+}
+
+.folder-link:hover{
+  text-decoration:underline;
 }
 
 .hidden{
@@ -91,40 +101,33 @@ button:hover{
 
 <div class="card hidden" id="main">
   <select id="layananSelect"></select>
-  <button onclick="loadData()">Tampilkan Data</button>
-  <div id="result"></div>
+  <button onclick="loadData()">Tampilkan</button>
 </div>
+
+<div id="result"></div>
 
 </div>
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbyzv6aJyQIFoWgg6CalLBl7738_QKt_HpUE8uS-yiXLS75foi3nOSw08Djj2zG_IeCGPA/exec";
-
-let userEmail = "";
+const API = "https://script.google.com/macros/s/AKfycbx_HKC6kaNhTSCAXdIup7021eKvT9OhXAQW7BMnKWMHxq5Up0SaNKcvPpiTiAJ1mDv8fg/exec";
+let userEmail="";
 
 function loadLayanan(){
 
-  userEmail = document.getElementById("email").value.trim();
-
-  if(!userEmail){
-    alert("Email wajib diisi");
-    return;
-  }
+  userEmail=document.getElementById("email").value.trim();
+  if(!userEmail){ alert("Email wajib"); return; }
 
   fetch(`${API}?action=list&email=${userEmail}`)
   .then(res=>res.json())
   .then(data=>{
-
     if(data.error){
-      document.getElementById("msg").innerHTML =
-        "<span style='color:red'>"+data.error+"</span>";
+      document.getElementById("msg").innerHTML="<span style='color:red'>"+data.error+"</span>";
       return;
     }
 
-    const select = document.getElementById("layananSelect");
+    const select=document.getElementById("layananSelect");
     select.innerHTML="";
-
     data.forEach(l=>{
       const opt=document.createElement("option");
       opt.value=l;
@@ -133,37 +136,64 @@ function loadLayanan(){
     });
 
     document.getElementById("main").classList.remove("hidden");
-    document.getElementById("msg").innerHTML="";
   });
 }
 
 function loadData(){
 
-  const layanan = document.getElementById("layananSelect").value;
+  const layanan=document.getElementById("layananSelect").value;
 
   fetch(`${API}?action=data&layanan=${layanan}&email=${userEmail}`)
   .then(res=>res.json())
   .then(data=>{
 
-    if(data.error){
-      alert(data.error);
-      return;
-    }
+    if(data.error){ alert(data.error); return; }
 
-    let html="<table class='table'><tr><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Gol</th></tr>";
+    let html="";
 
     data.forEach(d=>{
-      html+=`<tr>
-        <td>${d.nama}</td>
-        <td>${d.nip}</td>
-        <td>${d.jabatan}</td>
-        <td>${d.gol}</td>
-      </tr>`;
+
+      html+=`
+      <div class="card">
+        <h3>${d.nama}</h3>
+        <div class="field"><span class="label">NIP</span><br>${d.nip || "-"}</div>
+        <div class="field"><span class="label">Jabatan</span><br>${d.jabatan || "-"}</div>
+        <div class="field"><span class="label">Golongan</span><br>${d.gol || "-"}</div>
+        <div class="field"><span class="label">Folder</span><br>
+          ${d.folder ? `<a class="folder-link" href="${d.folder}" target="_blank">Buka Folder</a>` : "-"}
+        </div>
+        <div class="field">
+          <span class="label">Catatan</span><br>
+          <input type="text" value="${d.catatan || ""}" 
+            onchange="saveCatatan('${layanan}',${d.row},this.value)">
+        </div>
+      </div>
+      `;
     });
 
-    html+="</table>";
-
     document.getElementById("result").innerHTML=html;
+
+  });
+}
+
+function saveCatatan(layanan,row,value){
+
+  const formData = new FormData();
+  formData.append("email",userEmail);
+  formData.append("layanan",layanan);
+  formData.append("row",row);
+  formData.append("field","catatan");
+  formData.append("value",value);
+
+  fetch(API,{
+    method:"POST",
+    body:formData
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.error){
+      alert(data.error);
+    }
   });
 }
 
