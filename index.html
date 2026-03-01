@@ -63,67 +63,78 @@ textarea{width:100%;margin-top:6px;padding:6px;border-radius:6px;border:1px soli
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbyhXxS0VFl9XoyYTxlcVavG5vcjUH3X4F8z8kIrEORTQdnpsw5sCzZmT14-syL08hmL1A/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbwSDFnLxo_Qp9Sy5PDu_rSMSd-bhJ8Ppbr31BaX1jubHVfXPdHFhFroFCkZnPacihuQAA/exec";
 
 let currentLayanan="Pangkat";
-let allData=[];
-
-function goToDashboard(){
-document.getElementById("menuPage").style.display="none";
-document.getElementById("dashboardPage").style.display="block";
-document.querySelector(".back-btn").style.display="block";
-document.getElementById("headerTitle").innerText="DASHBOARD KEPEGAWAIAN";
-loadData();
-}
-
-function goToMenu(){
-document.getElementById("dashboardPage").style.display="none";
-document.getElementById("menuPage").style.display="block";
-document.querySelector(".back-btn").style.display="none";
-document.getElementById("headerTitle").innerText="MENU KEPEGAWAIAN";
-}
-
-function selectLayanan(layanan,el){
-currentLayanan=layanan;
-document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
-el.classList.add('active');
-loadData();
-}
 
 function loadData(){
-document.getElementById("dataArea").innerHTML="Loading...";
 fetch(`${API_URL}?layanan=${encodeURIComponent(currentLayanan)}`)
-.then(res=>res.json())
-.then(data=>{
-allData=data;
-render(data);
-});
+.then(r=>r.json())
+.then(data=>render(data));
 }
 
 function render(data){
+
 let html="";
+
 data.forEach(d=>{
+
 html+=`<div class="card-data">
 <div class="label">Nama</div>${d.nama}
-<div class="label">NIP</div>${d.nip}
-<div class="label">Waktu</div>${new Date(d.timestamp).toLocaleString()}`;
+<div class="label">NIP</div>${d.nip}`;
+
+if(d.gol) html+=`<div class="label">Golongan</div>${d.gol}`;
+if(d.jabatan) html+=`<div class="label">Jabatan</div>${d.jabatan}`;
+if(d.status) html+=`<div class="label">Status</div>${d.status}`;
+if(d.priode) html+=`<div class="label">Priode</div>${d.priode}`;
+if(d.nik) html+=`<div class="label">NIK</div>${d.nik}`;
+if(d.pak) html+=`<div class="label">PAK</div>${d.pak}`;
+if(d.hp) html+=`<div class="label">HP</div>${d.hp}`;
+if(d.jenis) html+=`<div class="label">Jenis</div>${d.jenis}`;
+if(d.lama) html+=`<div class="label">Lama</div>${d.lama}`;
+if(d.mulai) html+=`<div class="label">Mulai</div>${d.mulai}`;
+if(d.selesai) html+=`<div class="label">Selesai</div>${d.selesai}`;
+if(d.folder) html+=`<div class="label">Folder</div><a href="${d.folder}" target="_blank">Buka</a>`;
+if(d.fileSrikandi) html+=`<div class="label">File Srikandi</div><a href="${d.fileSrikandi}" target="_blank">Buka</a>`;
+if(d.fileSTR) html+=`<div class="label">File STR</div><a href="${d.fileSTR}" target="_blank">Buka</a>`;
+
+html+=`<div class="label">Waktu</div>${new Date(d.timestamp).toLocaleString()}`;
 
 if(currentLayanan!=="Cuti"){
-html+=`<div class="label">Catatan</div>
+html+=`
+<div class="label">Catatan</div>
 <textarea id="cat_${d.row}">${d.catatan||""}</textarea>
-<button class="save-btn" onclick="saveCatatan(${d.row})">Simpan</button>`;
+<button onclick="saveCatatan(${d.row})">Simpan</button>`;
+}else{
+html+=`<div class="label">Catatan</div>${d.catatan||""}`;
 }
+
 html+=`</div>`;
+
 });
+
 document.getElementById("dataArea").innerHTML=html;
 }
 
 function saveCatatan(row){
-const columnMap={"Pangkat":13,"Gaji Berkala":9,"UKOM":12,"Jabatan Fungsional":7,"SIB-SIP":9};
+const columnMap={
+"Pangkat":13,
+"Gaji Berkala":9,
+"UKOM":12,
+"Jabatan Fungsional":7,
+"SIB-SIP":9
+};
+
 const val=document.getElementById("cat_"+row).value;
+
 fetch(API_URL,{
 method:"POST",
-body:JSON.stringify({layanan:currentLayanan,row:row,column:columnMap[currentLayanan],value:val})
+body:JSON.stringify({
+layanan:currentLayanan,
+row:row,
+column:columnMap[currentLayanan],
+value:val
+})
 }).then(()=>loadData());
 }
 </script>
