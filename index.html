@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Kepegawaian</title>
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f8fafc;
+color:#111827;
+}
+header{
+position:fixed;
+top:0;left:0;right:0;
+height:55px;
+background:white;
+border-bottom:1px solid #e5e7eb;
+display:flex;
+align-items:center;
+padding:0 20px;
+font-weight:600;
+z-index:1000;
+}
+.layout{display:flex;margin-top:55px;}
+.sidebar{
+width:220px;
+background:white;
+border-right:1px solid #e5e7eb;
+padding:15px;
+height:calc(100vh - 55px);
+overflow:auto;
+}
+.menu-item{
+padding:8px 10px;
+border-radius:6px;
+cursor:pointer;
+margin-bottom:4px;
+font-size:14px;
+}
+.menu-item:hover{background:#f1f5f9;}
+.menu-item.active{background:#1e3a8a;color:white;}
+.content{flex:1;padding:20px 40px;}
+.card{
+background:white;
+padding:18px;
+border-radius:8px;
+margin-bottom:18px;
+border:1px solid #e5e7eb;
+}
+.label{font-weight:600;margin-top:8px;}
+textarea{
+width:100%;
+margin-top:6px;
+padding:6px;
+border-radius:6px;
+border:1px solid #cbd5e1;
+}
+.save-btn{
+margin-top:8px;
+padding:6px 14px;
+background:#1e3a8a;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+.folder-link{
+display:inline-block;
+padding:4px 10px;
+background:#facc15;
+color:black;
+font-weight:600;
+border-radius:5px;
+text-decoration:none;
+}
+</style>
+</head>
+<body>
+
+<header>Dashboard Kepegawaian RSDS</header>
+
+<div class="layout">
+
+<div class="sidebar">
+<div class="menu-item active" onclick="selectLayanan('Pangkat',this)">Pangkat</div>
+<div class="menu-item" onclick="selectLayanan('Gaji Berkala',this)">Gaji Berkala</div>
+<div class="menu-item" onclick="selectLayanan('UKOM',this)">UKOM</div>
+<div class="menu-item" onclick="selectLayanan('Jabatan Fungsional',this)">Jabatan Fungsional</div>
+<div class="menu-item" onclick="selectLayanan('Cuti',this)">Cuti</div>
+<div class="menu-item" onclick="selectLayanan('SIB-SIP',this)">SIB / SIP</div>
+</div>
+
+<div class="content">
+<div id="dataArea">Loading...</div>
+</div>
+
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbxxwLQxYCNS6HoYweziKl3Rj0w9N-68OIwaOSsMhiiC5RgK_N0vhbMZnf8cbH7nXoSilQ/exec";
+
+let currentLayanan="Pangkat";
+let allData=[];
+
+function selectLayanan(layanan,el){
+currentLayanan=layanan;
+document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
+el.classList.add('active');
+loadData();
+}
+
+function loadData(){
+
+document.getElementById("dataArea").innerHTML="Loading...";
+
+fetch(`${API_URL}?layanan=${encodeURIComponent(currentLayanan)}`)
+.then(res=>res.json())
+.then(data=>{
+allData=data;
+render(data);
+});
+}
+
+function render(data){
+
+let html="";
+
+data.forEach(d=>{
+
+html+=`<div class="card">`;
+
+html+=`<div class="label">Nama</div>${d.nama}`;
+html+=`<div class="label">NIP</div>${d.nip}`;
+
+if(d.gol)
+html+=`<div class="label">Golongan</div>${d.gol}`;
+
+if(d.jabatan)
+html+=`<div class="label">Jabatan</div>${d.jabatan}`;
+
+if(d.folder)
+html+=`<div class="label">Folder</div>
+<a class="folder-link" href="${d.folder}" target="_blank">Buka Folder</a>`;
+
+html+=`<div class="label">Waktu</div>${new Date(d.timestamp).toLocaleString()}`;
+
+if(currentLayanan!=="Cuti"){
+html+=`
+<div class="label">Catatan</div>
+<textarea id="cat_${d.row}">${d.catatan||""}</textarea>
+<button class="save-btn" onclick="saveCatatan(${d.row})">Simpan</button>`;
+}
+
+html+=`</div>`;
+});
+
+document.getElementById("dataArea").innerHTML=html;
+}
+
+function saveCatatan(row){
+
+const columnMap={
+"Pangkat":13,
+"Gaji Berkala":9,
+"UKOM":12,
+"Jabatan Fungsional":7,
+"SIB-SIP":9
+};
+
+const val=document.getElementById("cat_"+row).value;
+
+fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+layanan:currentLayanan,
+row:row,
+column:columnMap[currentLayanan],
+value:val
+})
+})
+.then(res=>res.json())
+.then(()=>loadData());
+}
+
+loadData();
+
+</script>
+</body>
+</html>
